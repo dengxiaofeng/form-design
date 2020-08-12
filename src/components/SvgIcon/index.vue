@@ -26,7 +26,7 @@ export default {
   props: {
     iconClass: {
       type: String,
-      required: true
+      required: false
     },
     className: {
       type: String,

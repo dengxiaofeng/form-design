@@ -1,0 +1,49 @@
+.vs-style-border-radius, .vs-style-border-style {
+  display: flex;
+  margin-top: 5px;
+  border: 1px solid rgba(0,0,0,.1);
+}
+
+.vs-style-border-radius .vs-style-border-setter-left-pane, .vs-style-border-style .vs-style-border-setter-left-pane {
+  width: 40%;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.vs-style-border-radius .vs-style-border-setter-left-pane, .vs-style-border-radius .vs-style-border-setter-right-pane, .vs-style-border-style .vs-style-border-setter-left-pane, .vs-style-border-style .vs-style-border-setter-right-pane {
+  display: flex;
+}
+.vs-style-border-radius .vs-style-border-setter-row .vs-style-border-selected, .vs-style-border-style .vs-style-border-setter-row .vs-style-border-selected {
+  background: linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.2));
+}
+.vs-style-border-radius .vs-style-border-setter-row>div, .vs-style-border-style .vs-style-border-setter-row>div {
+  background: linear-gradient(hsla(0,0%,100%,.3),hsla(0,0%,100%,.1));
+  margin: 2px;
+  padding: 5px;
+  border-radius: 2px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.vs-style-border-radius .vs-style-border-setter-right-pane, .vs-style-border-style .vs-style-border-setter-right-pane {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.vs-style-border-radius .vs-style-border-setter-left-pane, .vs-style-border-radius .vs-style-border-setter-right-pane, .vs-style-border-style .vs-style-border-setter-left-pane, .vs-style-border-style .vs-style-border-setter-right-pane {
+  display: flex;
+}
+
+.vs-style-border-radius .vs-style-border-setter-right-pane>div, .vs-style-border-style .vs-style-border-setter-right-pane>div {
+  display: flex;
+  align-items: center;
+}
+
+.ve-field.ve-inline-field {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+}
+

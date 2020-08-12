@@ -10,7 +10,7 @@ export function getDrawingList() {
   const version = localStorage.getItem(DRAWING_ITEMS_VERSION_KEY)
   if (version !== DRAWING_ITEMS_VERSION) {
     localStorage.setItem(DRAWING_ITEMS_VERSION_KEY, DRAWING_ITEMS_VERSION)
-    saveDrawingList([])
+    // saveDrawingList([])
     return null
   }
 

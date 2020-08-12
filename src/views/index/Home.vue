@@ -1,103 +1,84 @@
-
 <template>
-  <div class="container">
-    <div class="left-board">
-      <div class="logo-wrapper">
-        <div class="logo">
-          <img :src="logo" alt="logo"> Form Generator
-          <a class="github" href="https://github.com/JakHuang/form-generator" target="_blank">
-            <img src="https://github.githubassets.com/pinned-octocat.svg" alt>
-          </a>
-        </div>
-      </div>
-      <el-scrollbar class="left-scrollbar">
-        <div class="components-list">
-          <div v-for="(item, listIndex) in leftComponents" :key="listIndex">
-            <div class="components-title">
-              <svg-icon icon-class="component" />
-              {{ item.title }}
-            </div>
-            <draggable
-              class="components-draggable"
-              :list="item.list"
-              :group="{ name: 'componentsGroup', pull: 'clone', put: false }"
-              :clone="cloneComponent"
-              draggable=".components-item"
-              :sort="false"
-              @end="onEnd"
-            >
-              <div
-                v-for="(element, index) in item.list"
-                :key="index"
-                class="components-item"
-                @click="addComponent(element)"
-              >
-                <div class="components-body">
-                  <svg-icon :icon-class="element.__config__.tagIcon" />
-                  {{ element.__config__.label }}
-                </div>
+  <div class="container engine">
+    <div class="engine-main">
+      <div class="engine-panes">
+        <DockPane ref="dockPane"
+                  :components="leftComponents"
+                  :add-component="addComponent"
+                  :source-code="getSourceCode"
+                  :clone-component="cloneComponent"
+                  :actions="schemaConfig && schemaConfig.actions || []"
+                  :on-end="onEnd" :page-data-source="pageDataSource"
+        />
+        <div class="engine-pane engine-actionpane">
+          <div class="engine-actions-group engine-group-right">
+            <div class="engine-actionitem" @click="run">
+              <div class="ve-icon-button ve-icon-button-default preview-button" data-tip="预览 Cmd+P" data-dir="bottom">
+                <svg fill="currentColor" preserveAspectRatio="xMidYMid meet" width="20" height="20"
+                     viewBox="0 0 1024 1024" class="ve-svgicon" style="vertical-align: middle;"
+                >
+                  <path
+                    d="M512 864c-290.752 0-410.4-243.584-441.568-318.208a91.968 91.968 0 0 1 0-67.584C101.6 403.584 221.248 160 512 160c289.408 0 410.4 243.584 441.568 318.208 8.576 22.08 8.576 45.536 0 67.584C922.4 620.416 801.408 864 512 864zM129.984 500.48a30.4 30.4 0 0 0 0 21.664C156.16 588.48 261.6 800 512 800s355.84-211.52 382.016-276.48a30.4 30.4 0 0 0 0-21.664C867.84 435.52 762.4 224 512 224S156.16 435.52 129.984 500.48zM512 672c-88.192 0-160-72.32-160-160s71.808-160 160-160 160 72.32 160 160-71.808 160-160 160z m0-256c-52.608 0-96 42.88-96 96s42.88 96 96 96 96-42.88 96-96-43.392-96-96-96z"
+                  />
+                </svg>
+      
+
               </div>
-            </draggable>
+            </div>
+            <div class="engine-actionitem">
+              <div class="save-button" data-tip="保存 Cmd+S">
+                保 存
+              </div>
+            </div>
           </div>
         </div>
-      </el-scrollbar>
-    </div>
-
-    <div class="center-board">
-      <div class="action-bar">
-        <el-button icon="el-icon-video-play" type="text" @click="run">
-          运行
-        </el-button>
-        <el-button icon="el-icon-view" type="text" @click="showJson">
-          查看json
-        </el-button>
-        <el-button icon="el-icon-download" type="text" @click="download">
-          导出vue文件
-        </el-button>
-        <el-button class="copy-btn-main" icon="el-icon-document-copy" type="text" @click="copy">
-          复制代码
-        </el-button>
-        <el-button class="delete-btn" icon="el-icon-delete" type="text" @click="empty">
-          清空
-        </el-button>
-      </div>
-      <el-scrollbar class="center-scrollbar">
-        <el-row class="center-board-row" :gutter="formConf.gutter">
-          <el-form
-            :size="formConf.size"
-            :label-position="formConf.labelPosition"
-            :disabled="formConf.disabled"
-            :label-width="formConf.labelWidth + 'px'"
-          >
-            <draggable class="drawing-board" :list="drawingList" :animation="340" group="componentsGroup">
-              <draggable-item
-                v-for="(element, index) in drawingList"
-                :key="element.renderKey"
-                :drawing-list="drawingList"
-                :element="element"
-                :index="index"
-                :active-id="activeId"
-                :form-conf="formConf"
-                @activeItem="activeFormItem"
-                @copyItem="drawingItemCopy"
-                @deleteItem="drawingItemDelete"
-              />
-            </draggable>
-            <div v-show="!drawingList.length" class="empty-info">
-              从左侧拖入或点选组件进行表单设计
+        <div class="engine-pane engine-workspacepane">
+          <div class="engine-simulator">
+            <overlay v-if="activeData" :position="position" @copy="drawingItemCopy" @delete="drawingItemDelete" :getScrollTop="getScrollTop" />
+            <div class="engine-simulator-screen">
+              <div class="engine-pages">
+                <div class="engine-page engine-visible" ref="shell">
+                  <div :id="currentDocument"
+                       class="engine-document"
+                       :class="activeDocuementContent ? 'engine-selected-outline': ''" ref="document" @click.prevent="handleDocuementConfig"
+                  >
+                    <draggable v-if="documentTree" class="vc-root" :class="documentTree && documentTree.layout.id" style="width: 100%; height: 100%;" :list="drawingList" :animation="340" group="componentsGroup">
+                      <div class="vc-rootheader" />
+                      <div :style="{
+                             padding:rootContentConfig.rootContentPadding +'px',
+                             backgroundColor: rootContentConfig.rootContentColor}"
+                           :class="activePageContent ? 'engine-selected-outline': ''"
+                           style="min-height: 40px;" @click.prevent.stop="handleContentConfig"
+                      >
+                        <div v-if="!documentTree.layout.children[1].children.length" id="empty-root-view-container" />
+                        <draggable v-if="drawingList.length" class="drawing-board" :list="drawingList" :animation="340" group="componentsGroup">
+                          <draggable-item
+                            v-for="(element, index) in drawingList"
+                            :key="element.renderKey"
+                            :drawing-list="drawingList"
+                            :element="element"
+                            :index="index"
+                            :active-id="activeId"
+                            :form-conf="formConf"
+                            @activeItem="activeFormItem"
+                          />
+                        </draggable>
+                      </div>
+                      <div class="vc-footer" />
+                    </draggable>
+                  </div>
+                </div>
+              </div>
             </div>
-          </el-form>
-        </el-row>
-      </el-scrollbar>
+          </div>
+        </div>
+        <ConfigPanel :active-data="activeData"
+                        :config-obj="package.configObj"
+                        :form-conf="formConf"
+                        :show-field="!!drawingList.length"
+                        @change="handleChange"></ConfigPanel>
+      </div>
     </div>
-
-    <right-panel
-      :active-data="activeData"
-      :form-conf="formConf"
-      :show-field="!!drawingList.length"
-      @tag-change="tagChange"
-    />
-
     <form-drawer
       :visible.sync="drawerVisible"
       :form-data="formData"
@@ -116,7 +97,6 @@
       :show-file-name="showFileName"
       @confirm="generate"
     />
-    <input id="copyNode" type="hidden">
   </div>
 </template>
 
@@ -128,7 +108,9 @@ import ClipboardJS from 'clipboard'
 import render from '@/components/render/render'
 import FormDrawer from './FormDrawer'
 import JsonDrawer from './JsonDrawer'
-import RightPanel from './RightPanel'
+import ConfigPanel from './configPanel'
+import CloseIcon from '@/components/SvgIcon/close'
+import DockPane from './dockpane'
 import {
   inputComponents, selectComponents, layoutComponents, formConf
 } from '@/components/generator/config'
@@ -148,24 +130,102 @@ import {
   getDrawingList, saveDrawingList, getIdGlobal, saveIdGlobal, getFormConf
 } from '@/utils/db'
 import loadBeautifier from '@/utils/loadBeautifier'
+import InlineField from '@/components/filed-layout/inline-filed'
+import ChoiceGroup from '../../components/choice-control/choice-group'
+import ChoiceItem from '../../components/choice-control/choice-item'
+import Block from '@/components/block'
+import Collapsed from '@/components/collapsed'
+import StyleLayout from '@/components/style-layout'
+import Dialog from '@/components/dialog'
+import Overlay from './overlay'
+import VCIcon from '@/engine-components/engine-icon'
+import { globalConfig } from '../../components/event-setter/util'
+// import EventConfig from './event'
+import PageAction from './pageConfig'
+import _ from 'lodash'
+import styleSheetUtils from '@/utils/cache'
+import PageConfigRender from './parse/pageConfigRender'
+import { uuid } from './page/createPage'
+import { packageJSON } from '../../components/generator/config'
 
+const EVENT_ACTION_ADD = 'save'
+const EVENT_ACTION_DELETE = 'delete'
 let beautifier
-const emptyActiveData = { style: {}, autosize: {} }
+const emptyActiveData = {
+  style: {},
+  autosize: {}
+}
 let oldActiveId
 let tempActiveData
 const drawingListInDB = getDrawingList()
 const formConfInDB = getFormConf()
 const idGlobal = getIdGlobal()
+const parseComponent = function (validateConfig) {
+  let item
+  let type
+  const obj = (validateConfig instanceof Array) ? [] : {}
+
+  if (validateConfig) {
+    for (const key in validateConfig) {
+      item = validateConfig[key], type = item.type
+
+      if (Object.prototype.hasOwnProperty.call(validateConfig, key)) {
+        if (type === 'coms') {
+          continue
+        } else if (type == 'group' || type == 'menuChild') {
+          obj[key] = parseComponent(item.children, item.name)
+        } else if (item == 'menu') {
+          obj.options = parseComponent(validateConfig.children, item.name)
+        } else if (item.children) {
+          obj[key] = parseComponent(item.children)
+        } else {
+          obj[key] = item.default
+          delete obj.children
+        }
+      }
+    }
+  }
+  return obj
+}
+const identifiesField = function (tag) {
+  const field = {
+    'el-input': 'textField',
+    'el-select': 'selectField',
+    'vc_text': 'vcText',
+    'el-form': 'Form',
+    'el-button': 'button',
+    'pro-table': 'proTable',
+    'el_date-picker': 'el_date_picker',
+    'el-date-picker': 'el_date_picker',
+    'el-radio-group': 'el_radio_group',
+    'el-checkbox-group': 'el_checkbox_group'
+  }
+  return uuid(6, '', `${field[tag] ? field[tag] : tag}`).replace(/-/ig, '_')
+}
 
 export default {
   components: {
+    PageConfigRender,
+    ChoiceItem,
+    ChoiceGroup,
     draggable,
     render,
     FormDrawer,
     JsonDrawer,
-    RightPanel,
+    ConfigPanel,
     CodeTypeDialog,
-    DraggableItem
+    DraggableItem,
+    CloseIcon,
+    DockPane,
+    InlineField,
+    Block,
+    Collapsed,
+    StyleLayout,
+    Dialog,
+    // EventConfig,
+    PageAction,
+    Overlay,
+    VCIcon
   },
   data() {
     return {
@@ -176,16 +236,17 @@ export default {
       selectComponents,
       layoutComponents,
       labelWidth: 100,
-      drawingList: drawingDefalut,
+      drawingList: getDrawingList(),
       drawingData: {},
-      activeId: drawingDefalut[0].formId,
+      activeId: '',
       drawerVisible: false,
       formData: {},
       dialogVisible: false,
       jsonDrawerVisible: false,
       generateConf: null,
       showFileName: false,
-      activeData: drawingDefalut[0],
+      activeData: {},
+      schemaConfig: getDrawingList(),
       saveDrawingListDebounce: debounce(340, saveDrawingList),
       saveIdGlobalDebounce: debounce(340, saveIdGlobal),
       leftComponents: [
@@ -201,23 +262,49 @@ export default {
           title: '布局型组件',
           list: layoutComponents
         }
-      ]
+      ],
+      activePageContent: false,
+      activeDocuementContent: false,
+      rootContentConfig: {
+        rootContentPadding: '20',
+        rootContentColor: 'white'
+      },
+      eventVisible: false,
+      bindConfig: {},
+      position: {},
+      package: {
+        configObj: {}
+      },
+      isReady: false
     }
   },
   computed: {
+    getRoot() {
+
+    },
+    pageDataSource() {
+      return this.schemaConfig && this.schemaConfig.pages[0].dataSource
+    },
+    currentDocument() {
+      // const pageConfig = JSON.parse(localStorage.getItem('schemaPageConfig') || '{}')
+      return this.schemaConfig && Array.isArray(this.schemaConfig.pages) && this.schemaConfig.pages[0].id
+    },
+    documentTree() {
+      return this.schemaConfig && this.schemaConfig.pages[0]
+    },
+    getSourceCode: {
+      get() {
+        return JSON.stringify(this.schemaConfig, null, 2)
+      },
+      set(val) {
+        this.schemaConfig = val
+        this.saveDrawingListDebounce(val)
+        return val
+      }
+
+    },
   },
   watch: {
-    // eslint-disable-next-line func-names
-    'activeData.__config__.label': function (val, oldVal) {
-      if (
-        this.activeData.placeholder === undefined
-        || !this.activeData.__config__.tag
-        || oldActiveId !== this.activeId
-      ) {
-        return
-      }
-      this.activeData.placeholder = this.activeData.placeholder.replace(oldVal, '') + val
-    },
     activeId: {
       handler(val) {
         oldActiveId = val
@@ -226,10 +313,22 @@ export default {
     },
     drawingList: {
       handler(val) {
-        this.saveDrawingListDebounce(val)
+        if (this.schemaConfig) {
+          this.schemaConfig.pages[0].layout.children[1].props = {
+            ...this.schemaConfig.pages[0].layout.children[1].props
+          }
+          this.schemaConfig.pages[0].layout.children[1].children = val
+          this.saveDrawingListDebounce(this.schemaConfig)
+        }
+
         if (val.length === 0) this.idGlobal = 100
       },
       deep: true
+    },
+    schemaConfig(val, oldVal) {
+      if (val !== oldVal) {
+        this.saveDrawingListDebounce(val)
+      }
     },
     idGlobal: {
       handler(val) {
@@ -239,37 +338,111 @@ export default {
     }
   },
   mounted() {
-    if (Array.isArray(drawingListInDB) && drawingListInDB.length > 0) {
-      this.drawingList = drawingListInDB
+    // styleSheetUtils.invoke(".engine-document", ":root {background-color: #f2f3f5;display: flex;}")
+    // const eventConfig = globalConfig.getConfigFromRemote()
+    // eventConfig.function && eventConfig.function.module ? window.action_util.setActions(eventConfig.function, 'global') : window.action_util.setActions({}, 'global')
+    // eventConfig.fit ? window.action_util.setActions(eventConfig.fit, 'fitGlobal') : window.action_util.setActions({}, 'fitGlobal')
+    // eventConfig.willFetch ? window.action_util.setActions(eventConfig.willFetch, 'willFetchGlobal') : window.action_util.setActions({}, 'willFetchGlobal')
+    // this.schemaConfig && this.schemaConfig.actions ? window.action_util.setActions(this.schemaConfig.actions, 'page') : window.action_util.setActions({}, 'page')
+    if (drawingListInDB && drawingListInDB.pages && Array.isArray(drawingListInDB.pages) && drawingListInDB.pages.length > 0) {
+      this.drawingList = drawingListInDB.pages[0].layout.children[1].children
     } else {
-      this.drawingList = drawingDefalut
+      this.drawingList = []
     }
-    this.activeFormItem(this.drawingList[0])
-    if (formConfInDB) {
-      this.formConf = formConfInDB
+    if (Array.isArray(this.drawingList) && this.drawingList.length > 0) {
+      this.activeFormItem(this.drawingList[0])
     }
-    loadBeautifier(btf => {
-      beautifier = btf
-    })
-    const clipboard = new ClipboardJS('#copyNode', {
-      text: trigger => {
-        const codeStr = this.generateCode()
-        this.$notify({
-          title: '成功',
-          message: '代码已复制到剪切板，可粘贴。',
-          type: 'success'
-        })
-        return codeStr
-      }
-    })
-    clipboard.on('error', e => {
-      this.$message.error('代码复制失败')
+
+    // window.share.event.on('dockUtils', event => {
+    //   console.log('123', event)
+    //   this.$refs && this.$refs.dockPane && this.$refs.dockPane.handlerMenuDock(2)
+    // })
+    this.isReady = true
+    window.addEventListener('resize', this.calcOverPostion)
+
+    this.$nextTick(() => {
+      const shell = this.$refs.shell
+      const firstElementChild = shell.firstElementChild
+      firstElementChild.addEventListener("scroll", this.scroll, !0)
     })
   },
   methods: {
-    activeFormItem(element) {
-      this.activeData = element
-      this.activeId = element.__config__.formId
+    handleActionChange(obj) {
+      if (obj.action === EVENT_ACTION_ADD) {
+        this.schemaConfig.pages[0].layout.props[obj.keyChain] = obj
+      }
+
+      if (obj.action === EVENT_ACTION_DELETE) {
+        this.schemaConfig.pages[0].layout.props[obj.eventName] = '// 页面节点即将开始渲染 \nfunction willMount(ctx) {\n    \n}'
+      }
+
+      this.saveDrawingListDebounce(this.schemaConfig)
+    },
+    handleCloseEvent() {
+      this.eventVisible = false
+    },
+    handleContentConfig() {
+      debugger
+      this.activeDocuementContent = false
+      this.activePageContent = !this.activePageContent
+      this.activeData = this.schemaConfig.pages[0].layout.children[1]
+      this.package.configObj = packageJSON[this.activeData.componentName].config || {};
+    },
+    handleDocuementConfig() {
+      debugger
+      this.activePageContent = false
+      this.activeDocuementContent = !this.activeDocuementContent
+      this.activeData = this.schemaConfig.pages[0].layout
+      this.package.configObj = packageJSON[this.activeData.componentName].config || {}
+      console.log(this.package.configObj)
+    },
+    handleRootContentConfig(val, key) {
+      const rootContentProps = _.get(this.schemaConfig, 'pages[0].layout.children[1].props')
+      this.rootContentConfig[key] = val
+      _.set(this.schemaConfig, 'pages[0].layout.children[1].props', { ...rootContentProps, ...this.rootContentConfig })
+      this.saveDrawingListDebounce(this.schemaConfig)
+    },
+    getDocument() {
+      return this.schemaConfig && Array.isArray(this.schemaConfig.pages) && this.schemaConfig.pages[0].id
+    },
+    activeFormItem(element, parent, index, event) {
+      this.activeDocuementContent = false
+      this.activePageContent = false
+      this.activeData = {
+        ...element,
+        parent,
+        index
+      }
+      const configObj = packageJSON[element.componentName].config || {}
+      this.package.configObj = configObj
+      this.activeId = element.id
+      this.calcOverPostion()
+    },
+    calcOverPostion() {
+      this.$nextTick(() => {
+        const node = document.querySelector(`.${this.activeData.id}`)
+        const nodeRect = node.getBoundingClientRect()
+        const root = document.querySelector(`#${this.getDocument()}`)
+        const rootRect = root.getBoundingClientRect()
+        if (node) {
+          this.position = {
+            width: `${node.offsetWidth}px`,
+            height: `${node.offsetHeight}px`,
+            transform: `translate(${nodeRect.left - rootRect.left}px, ${nodeRect.top + root.scrollTop - rootRect.top}px)`
+          }
+        }
+      })
+    },
+    scroll() {
+      debugger
+      clearTimeout(this.scrolling)
+      this.scrolling = setTimeout(() => {
+        this.scrolling = null
+      }, 50)
+      window.share.event.emit("scroll", this.getScrollTop())
+    },
+    getScrollTop() {
+       return this.$refs.document ? this.$refs.document.scrollTop: 0
     },
     onEnd(obj) {
       if (obj.from !== obj.to) {
@@ -277,23 +450,30 @@ export default {
         this.activeId = this.idGlobal
       }
     },
-    addComponent(item) {
+    addComponent(item, event) {
       const clone = this.cloneComponent(item)
       this.drawingList.push(clone)
-      this.activeFormItem(clone)
+      this.activeFormItem(clone, event)
     },
     cloneComponent(origin) {
       const clone = deepClone(origin)
-      const config = clone.__config__
-      config.span = this.formConf.span // 生成代码时，会根据span做精简判断
+      const config = clone.componentConfig
+      const configObj = packageJSON[config.tag].config || {}
+      this.package.configObj = configObj
+      clone.props = parseComponent(configObj)
+      config.span = this.formConf.span
       this.createIdAndKey(clone)
-      clone.placeholder !== undefined && (clone.placeholder += config.label)
       tempActiveData = clone
       return tempActiveData
     },
     createIdAndKey(item) {
-      const config = item.__config__
+      const config = item.componentConfig
       config.formId = ++this.idGlobal
+      item.componentName = config.tag
+      item.id = uuid(6, '', 'node').replace('-', '_')
+      if (item.props && item.props.advanced) {
+        item.props.advanced.fieldId = identifiesField(item.componentName)
+      }
       config.renderKey = +new Date() // 改变renderKey后可以实现强制更新组件
       if (config.layout === 'colFormItem') {
         item.__vModel__ = `field${this.idGlobal}`
@@ -301,19 +481,22 @@ export default {
         config.componentName = `row${this.idGlobal}`
         !Array.isArray(config.children) && (config.children = [])
         delete config.label // rowFormItem无需配置label属性
+      } else if (config.layout === 'form') {
+        item.props.formRef = uuid(6, '', 'elForm_').replace('-', '')
+        item.props.formModel = uuid(6, '', 'formModel_').replace('-', '')
+        item.props.formRules = uuid(6, '', 'formRules_').replace('-', '')
       }
+
       if (Array.isArray(config.children)) {
         config.children = config.children.map(childItem => this.createIdAndKey(childItem))
       }
       return item
     },
     AssembleFormData() {
-      this.formData = {
-        fields: deepClone(this.drawingList),
-        ...this.formConf
-      }
+      this.formData = this.schemaConfig
     },
     generate(data) {
+      debugger
       const func = this[`exec${titleCase(this.operationType)}`]
       this.generateConf = data
       func && func(data)
@@ -328,24 +511,34 @@ export default {
       saveAs(blob, data.fileName)
     },
     execCopy(data) {
-      document.getElementById('copyNode').click()
+      document.getElementById('copyNode')
+        .click()
     },
     empty() {
-      this.$confirm('确定要清空所有组件吗？', '提示', { type: 'warning' }).then(
-        () => {
-          this.drawingList = []
-          this.idGlobal = 100
-        }
-      )
+      this.$confirm('确定要清空所有组件吗？', '提示', { type: 'warning' })
+        .then(
+          () => {
+            this.drawingList = []
+            this.idGlobal = 100
+          }
+        )
     },
-    drawingItemCopy(item, parent) {
-      let clone = deepClone(item)
+    drawingItemCopy() {
+      let clone = deepClone(this.activeData)
       clone = this.createIdAndKey(clone)
-      parent.push(clone)
+      this.activeData.parent.push(clone)
       this.activeFormItem(clone)
     },
-    drawingItemDelete(index, parent) {
-      parent.splice(index, 1)
+    drawingItemDelete() {
+      if (this.activeData && this.activeData.parent) {
+        this.activeData.parent.splice(this.activeData.index, 1)
+      } else {
+        this.activeData.parent = []
+        const parentId = this.activeData.id
+
+        console.log(this.activeData)
+      }
+
       this.$nextTick(() => {
         const len = this.drawingList.length
         if (len) {
@@ -358,17 +551,8 @@ export default {
       this.AssembleFormData()
       const script = vueScript(makeUpJs(this.formData, type))
       const html = vueTemplate(makeUpHtml(this.formData, type))
-      const css = cssStyle(makeUpCss(this.formData))
-      return beautifier.html(html + script + css, beautifierConf.html)
-    },
-    showJson() {
-      this.AssembleFormData()
-      this.jsonDrawerVisible = true
-    },
-    download() {
-      this.dialogVisible = true
-      this.showFileName = true
-      this.operationType = 'download'
+      // const css = cssStyle(makeUpCss(this.formData))
+      return beautifier.html(html + script, beautifierConf.html)
     },
     run() {
       this.dialogVisible = true
@@ -380,39 +564,25 @@ export default {
       this.showFileName = false
       this.operationType = 'copy'
     },
-    tagChange(newTag) {
-      newTag = this.cloneComponent(newTag)
-      const config = newTag.__config__
-      newTag.__vModel__ = this.activeData.__vModel__
-      config.formId = this.activeId
-      config.span = this.activeData.__config__.span
-      this.activeData.__config__.tag = config.tag
-      this.activeData.__config__.tagIcon = config.tagIcon
-      this.activeData.__config__.document = config.document
-      if (typeof this.activeData.__config__.defaultValue === typeof config.defaultValue) {
-        config.defaultValue = this.activeData.__config__.defaultValue
-      }
-      Object.keys(newTag).forEach(key => {
-        if (this.activeData[key] !== undefined) {
-          newTag[key] = this.activeData[key]
-        }
-      })
-      this.activeData = newTag
-      this.updateDrawingList(newTag, this.drawingList)
+    handleChange(val) {
+      this.activeData.props[val.keyChain.join('.')] = val.value
+      this.$set(this.activeData.props, val.keyChain.join('.'), val.value)
+      console.log('new SchemeConfig', this.schemaConfig)
+      this.getSourceCode = this.schemaConfig
     },
     updateDrawingList(newTag, list) {
-      const index = list.findIndex(item => item.__config__.formId === this.activeId)
+      const index = list.findIndex(item => item.componentConfig.formId === this.activeId)
       if (index > -1) {
         list.splice(index, 1, newTag)
       } else {
         list.forEach(item => {
-          if (Array.isArray(item.__config__.children)) this.updateDrawingList(newTag, item.__config__.children)
+          if (Array.isArray(item.componentConfig.children)) this.updateDrawingList(newTag, item.componentConfig.children)
         })
       }
     },
     refreshJson(data) {
-      this.drawingList = deepClone(data.fields)
-      delete data.fields
+      this.drawingList = deepClone(data)
+      // delete data.fields
       this.formConf = data
     }
   }
@@ -420,5 +590,21 @@ export default {
 </script>
 
 <style lang='scss'>
-@import '@/styles/home';
+  @import '@/styles/home';
+  @import "@/styles/design";
+  #empty-root-view-container {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    background: url(https://img.alicdn.com/tps/TB19YxvOVXXXXXqapXXXXXXXXXX-364-220.png) 50%;
+    background-repeat: no-repeat;
+    -webkit-background-size: 182px auto;
+    background-size: 182px auto;
+    top: 0px;
+  }
+  .engine-selected-outline {
+    outline: 2px solid var(--color-brand-light,#197aff);
+    z-index: 1;
+    outline-offset: -2px;
+  }
 </style>

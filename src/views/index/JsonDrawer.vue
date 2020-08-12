@@ -25,11 +25,11 @@
 </template>
 
 <script>
-import { beautifierConf } from '@/utils/index'
+// import { beautifierConf } from '@/utils/index'
 import ClipboardJS from 'clipboard'
 import { saveAs } from 'file-saver'
-import loadMonaco from '@/utils/loadMonaco'
-import loadBeautifier from '@/utils/loadBeautifier'
+// import loadMonaco from '@/utils/loadMonaco'
+// import loadBeautifier from '@/utils/loadBeautifier'
 
 let beautifier
 let monaco
@@ -76,15 +76,15 @@ export default {
       }
     },
     onOpen() {
-      loadBeautifier(btf => {
-        beautifier = btf
-        this.beautifierJson = beautifier.js(this.jsonStr, beautifierConf.js)
-
-        loadMonaco(val => {
-          monaco = val
-          this.setEditorValue('editorJson', this.beautifierJson)
-        })
-      })
+      // loadBeautifier(btf => {
+      //   beautifier = btf
+      //   this.beautifierJson = beautifier.js(this.jsonStr, beautifierConf.js)
+      //
+      //   loadMonaco(val => {
+      //     monaco = val
+      //     this.setEditorValue('editorJson', this.beautifierJson)
+      //   })
+      // })
     },
     onClose() {},
     setEditorValue(id, codeStr) {
@@ -93,7 +93,7 @@ export default {
       } else {
         this.jsonEditor = monaco.editor.create(document.getElementById(id), {
           value: codeStr,
-          theme: 'vs-dark',
+          theme: 'vs',
           language: 'json',
           automaticLayout: true
         })

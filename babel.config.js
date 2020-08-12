@@ -1,5 +1,6 @@
 module.exports = {
   presets: [
-    '@vue/cli-plugin-babel/preset'
-  ]
+    '@vue/app'
+  ],
+  //plugins: ['jsx-v-model', 'transform-vue-jsx']
 }

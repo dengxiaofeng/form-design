@@ -68,13 +68,21 @@ $lighterBlue: #409EFF;
   border-left: 1px solid #f1e8e8;
   border-right: 1px solid #f1e8e8;
   box-sizing: border-box;
+  ::v-deep .center-board-row {
+    margin-bottom: 30px;
+  }
+}
+.el-scrollbar__bar.is-vertical {
+  width: 0px!important;
 }
 .center-board {
   height: 100vh;
   width: auto;
   margin: 0 350px 0 260px;
   box-sizing: border-box;
+
 }
+
 .empty-info{
   position: absolute;
   top: 46%;
@@ -134,12 +142,18 @@ $lighterBlue: #409EFF;
   box-sizing: border-box;
   & > .el-form {
     // 69 = 12+15+42
-    height: calc(100vh - 69px);
+    //height: calc(100vh - 69px);
   }
 }
 .drawing-board {
   height: 100%;
-  position: relative;
+  //position: relative;
+  display: inline-block;
+  width: 100%;
+  .el-form {
+    display: inline-block;
+    width: 100%;
+  }
   .components-body {
     padding: 0;
     margin: 0;
@@ -166,15 +180,19 @@ $lighterBlue: #409EFF;
     background-color: $selectedColor;
   }
   .active-from-item {
-    & > .el-form-item{
-      background: $selectedColor;
+    &  .el-form-item{
+      //background: $selectedColor;
       border-radius: 6px;
     }
-    & > .drawing-item-copy, & > .drawing-item-delete{
+    &  .drawing-item-copy, &  .drawing-item-delete{
       display: initial;
     }
-    & > .component-name{
+    & .component-name{
       color: $lighterBlue;
+    }
+    &.el-form {
+      display: inline-block;
+      width: 100%;
     }
   }
   .el-form-item{
@@ -188,14 +206,14 @@ $lighterBlue: #409EFF;
     border: 1px dashed #ccc;
   }
   .el-form-item{
-    padding: 12px 10px;
+    padding: 0px 5px;
   }
 }
 .drawing-row-item{
   position: relative;
   cursor: move;
   box-sizing: border-box;
-  border: 1px dashed #ccc;
+  //border: 1px dashed #ccc;
   border-radius: 3px;
   padding: 0 2px;
   margin-bottom: 15px;
@@ -203,7 +221,7 @@ $lighterBlue: #409EFF;
     margin-bottom: 2px;
   }
   .el-col{
-    margin-top: 22px;
+    //margin-top: 12px;
   }
   .el-form-item{
     margin-bottom: 0;
@@ -268,4 +286,15 @@ $lighterBlue: #409EFF;
       color: #fff;
     }
   }
+}
+.el-collapse-item__content {
+  margin: 6px;
+}
+
+.ve-color-popover {
+  background: transparent!important;
+  padding-right: 20px;
+}
+.ve-field .ve-field-body > span {
+  width: 100%;
 }

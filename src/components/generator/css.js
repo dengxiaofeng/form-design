@@ -4,15 +4,17 @@ const styles = {
 }
 
 function addCss(cssList, el) {
-  const css = styles[el.__config__.tag]
+  const css = styles[el.componentConfig.tag]
   css && cssList.indexOf(css) === -1 && cssList.push(css)
-  if (el.__config__.children) {
-    el.__config__.children.forEach(el2 => addCss(cssList, el2))
+  if (el.componentConfig.children) {
+    el.componentConfig.children.forEach(el2 => addCss(cssList, el2))
   }
 }
 
 export function makeUpCss(conf) {
+  console.log('makeUpCss', conf)
+  const cssConfig = conf.pages[0].layout.children[1]
   const cssList = []
-  conf.fields.forEach(el => addCss(cssList, el))
+  cssConfig.children.forEach(el => addCss(cssList, el))
   return cssList.join('\n')
 }

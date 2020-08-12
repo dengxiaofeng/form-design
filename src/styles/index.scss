@@ -12,7 +12,29 @@ body, html{
 input, textarea{
   font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji;
 }
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
 
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,.3);
+  border-radius: 5px;
+}
+
+button, html input[type="button"], input[type="reset"], input[type="submit"] {
+  -webkit-appearance: button;
+  cursor: pointer;
+  text-transform: none;
+  overflow: visible;
+}
+ul, li {
+  margin: 0;
+  padding: 0;
+}
+ul li {
+  list-style: none;
+}
 .editor-tabs{
   background: $editorTabsborderColor;
   .el-tabs__header{
@@ -134,4 +156,36 @@ input, textarea{
 }
 .el-upload__tip{
   line-height: 1.2;
+}
+
+.el-input {
+  font-size: 12px;
+  .el-input__inner {
+    line-height: 30px;
+    height: 30px;
+  }
+}
+.el-form-item {
+  margin-bottom: 0!important;
+}
+.el-select {
+  width: 100%;
+}
+
+.ve-action-pane {
+  .el-tabs__nav-scroll {
+    background: var(--color-block-background-shallow, rgba(31, 56, 88, 0.06));
+    border-bottom: 1px solid var(--color-line-normal, rgba(31, 56, 88, 0.1));
+    .el-tabs__item {
+      height: 30px!important;
+      line-height: 30px!important;
+    }
+  }
+  .ve-code-control {
+    border: none!important;
+  }
+}
+
+.vc-rootcontent .el-form-item {
+  margin-bottom: 12px!important;
 }

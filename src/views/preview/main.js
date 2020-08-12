@@ -1,9 +1,22 @@
-import Vue from 'vue'
-import { loadScriptQueue } from '@/utils/loadScript'
-import Tinymce from '@/components/tinymce/index.vue'
+import "../../engine-components/style/index.css";
+import "../../styles/index.scss";
+
+import Vue from "vue";
+
+import Tinymce from "@/components/tinymce/index.vue";
+import {
+  ProTable,
+  VCContainer,
+  VCText
+} from "@/engine-components/index.js";
+import { loadScriptQueue } from "@/utils/loadScript";
 
 Vue.component('tinymce', Tinymce)
+Vue.component('vc-container', VCContainer)
 
+Vue.component('vc-text', VCText)
+
+Vue.component('pro-table', ProTable)
 const $previewApp = document.getElementById('previewApp')
 const childAttrs = {
   file: '',

@@ -3,7 +3,7 @@
     <el-drawer v-bind="$attrs" v-on="$listeners" @opened="onOpen" @close="onClose">
       <div style="height:100%">
         <el-row style="height:100%;overflow:auto">
-          <el-col :md="24" :lg="12" class="left-editor">
+          <el-col :md="24" :lg="8" class="left-editor">
             <div class="setting" title="资源引用" @click="showResource">
               <el-badge :is-dot="!!resources.length" class="item">
                 <i class="el-icon-setting" />
@@ -32,11 +32,11 @@
                 </span>
               </el-tab-pane>
             </el-tabs>
-            <div v-show="activeTab==='html'" id="editorHtml" class="tab-editor" />
-            <div v-show="activeTab==='js'" id="editorJs" class="tab-editor" />
-            <div v-show="activeTab==='css'" id="editorCss" class="tab-editor" />
+            <editor v-show="activeTab==='html'" ref="editorHtml" :editor-confog="editorConfog.html" :value="htmlCode" style="height: 100%" />
+            <editor v-show="activeTab==='js'" ref="editorJs" :editor-confog="editorConfog.js" :value="jsCode" style="height: 100%" />
+            <editor v-show="activeTab==='css'" ref="editorCss" :editor-confog="editorConfog.css" :value="cssCode" style="height: 100%" />
           </el-col>
-          <el-col :md="24" :lg="12" class="right-preview">
+          <el-col :md="24" :lg="16" class="right-preview">
             <div class="action-bar" :style="{'text-align': 'left'}">
               <span class="bar-btn" @click="runCode">
                 <i class="el-icon-refresh" />
@@ -68,11 +68,11 @@
         </el-row>
       </div>
     </el-drawer>
-    <resource-dialog
-      :visible.sync="resourceVisible"
-      :origin-resource="resources"
-      @save="setResource"
-    />
+    <!--    <resource-dialog-->
+    <!--      :visible.sync="resourceVisible"-->
+    <!--      :origin-resource="resources"-->
+    <!--      @save="setResource"-->
+    <!--    />-->
   </div>
 </template>
 <script>
@@ -86,8 +86,9 @@ import { makeUpJs } from '@/components/generator/js'
 import { makeUpCss } from '@/components/generator/css'
 import { exportDefault, beautifierConf, titleCase } from '@/utils/index'
 import ResourceDialog from './ResourceDialog'
-import loadMonaco from '@/utils/loadMonaco'
-import loadBeautifier from '@/utils/loadBeautifier'
+import Editor from '@/components/editor'
+// import loadMonaco from '@/utils/loadMonaco'
+// import loadBeautifier from '@/utils/loadBeautifier'
 
 const editorObj = {
   html: null,
@@ -95,15 +96,19 @@ const editorObj = {
   css: null
 }
 const mode = {
-  html: 'html',
-  js: 'javascript',
-  css: 'css'
+  html: {
+    language: 'html'
+  },
+  js: {
+    language: 'javascript'
+  },
+  css: {
+    language: 'css'
+  }
 }
-let beautifier
-let monaco
 
 export default {
-  components: { ResourceDialog },
+  components: { ResourceDialog, Editor },
   props: ['formData', 'generateConf'],
   data() {
     return {
@@ -118,7 +123,8 @@ export default {
       resourceVisible: false,
       scripts: [],
       links: [],
-      monaco: null
+      monaco: null,
+      editorConfog: mode
     }
   },
   computed: {
@@ -126,7 +132,24 @@ export default {
       return this.scripts.concat(this.links)
     }
   },
-  watch: {},
+  watch: {
+    activeTab(val) {
+      if (val === 'html') {
+        this.$refs.editorHtml.initMonaco()
+        editorObj[val] = this.$refs.editorHtml
+      }
+
+      if (val === 'js') {
+        this.$refs.editorJs.initMonaco()
+        editorObj[val] = this.$refs.editorJs
+      }
+      if (val === 'css') {
+        this.$refs.editorCss.initMonaco()
+        editorObj[val] = this.$refs.editorCss
+      }
+    }
+
+  },
   created() {
   },
   mounted() {
@@ -160,24 +183,9 @@ export default {
       this.htmlCode = makeUpHtml(this.formData, type)
       this.jsCode = makeUpJs(this.formData, type)
       this.cssCode = makeUpCss(this.formData)
-
-      loadBeautifier(btf => {
-        beautifier = btf
-        this.htmlCode = beautifier.html(this.htmlCode, beautifierConf.html)
-        this.jsCode = beautifier.js(this.jsCode, beautifierConf.js)
-        this.cssCode = beautifier.css(this.cssCode, beautifierConf.html)
-
-        loadMonaco(val => {
-          monaco = val
-          this.setEditorValue('editorHtml', 'html', this.htmlCode)
-          this.setEditorValue('editorJs', 'js', this.jsCode)
-          this.setEditorValue('editorCss', 'css', this.cssCode)
-          if (!this.isInitcode) {
-            this.isRefreshCode = true
-            this.isIframeLoaded && (this.isInitcode = true) && this.runCode()
-          }
-        })
-      })
+      this.$refs.editorHtml && this.$refs.editorHtml.initMonaco()
+      this.$refs.editorJs && this.$refs.editorJs.initMonaco()
+      this.$refs.editorCss && this.$refs.editorCss.initMonaco()
     },
     onClose() {
       this.isInitcode = false
@@ -201,14 +209,14 @@ export default {
         })
       }
       // ctrl + s 刷新
-      editorObj[type].onKeyDown(e => {
-        if (e.keyCode === 49 && (e.metaKey || e.ctrlKey)) {
-          this.runCode()
-        }
-      })
+      // editorObj[type].onKeyDown(e => {
+      //   if (e.keyCode === 49 && (e.metaKey || e.ctrlKey)) {
+      //     this.runCode()
+      //   }
+      // })
     },
     runCode() {
-      const jsCodeStr = editorObj.js.getValue()
+      const jsCodeStr = editorObj.js.getEditorContent()
       try {
         const ast = parse(jsCodeStr, { sourceType: 'module' })
         const astBody = ast.program.body
@@ -227,9 +235,9 @@ export default {
             type: 'refreshFrame',
             data: {
               generateConf: this.generateConf,
-              html: editorObj.html.getValue(),
+              html: editorObj.html.getEditorContent(),
               js: jsCodeStr.replace(exportDefault, ''),
-              css: editorObj.css.getValue(),
+              // css: editorObj.css.getEditorContent(),
               scripts: this.scripts,
               links: this.links
             }
@@ -250,8 +258,8 @@ export default {
     generateCode() {
       const html = vueTemplate(editorObj.html.getValue())
       const script = vueScript(editorObj.js.getValue())
-      const css = cssStyle(editorObj.css.getValue())
-      return beautifier.html(html + script + css, beautifierConf.html)
+      // const css = cssStyle(editorObj.css.getValue())
+      return beautifier.html(html + script, beautifierConf.html)
     },
     exportFile() {
       this.$prompt('文件名:', '导出文件', {
